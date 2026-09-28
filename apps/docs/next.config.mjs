@@ -10,6 +10,21 @@
 // be allowed to 404.
 const DOCS = "https://zanreal.com/docs/oss/nemo";
 
+// Top-level pages of the current major (`docs/latest/*.mdx` at the repository
+// root). Listed rather than read from disk because this app is built from
+// `apps/docs` and must not depend on files outside it.
+const LATEST_PAGES = [
+  "advanced-matching",
+  "best-practices",
+  "configuration",
+  "context",
+  "functions",
+  "matcher",
+  "migration",
+  "nesting",
+  "stewardship",
+];
+
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
@@ -69,12 +84,28 @@ const config = {
       { source: "/docs/2.0/:path*", destination: `${DOCS}/v2/:path*`, permanent: true },
       { source: "/docs/1.4/:path*", destination: `${DOCS}/v1/:path*`, permanent: true },
 
-      // Anything else under /docs. Nothing outside the version folders was
-      // ever published here, so this exists so that a stray or mistyped docs
-      // URL is answered by the site that now owns the docs namespace - and so
-      // that no /docs path on this host can quietly start serving content
-      // again alongside the copy on zanreal.com.
-      { source: "/docs/:path*", destination: `${DOCS}/:path*`, permanent: true },
+      // Unversioned pages. Before the 2.0 folder existed, the then-current docs
+      // were published straight under /docs (the Wayback Machine has
+      // /docs/functions, /docs/configuration, /docs/context and
+      // /docs/conventions/*). Those pages are the current major's now, and on
+      // zanreal.com the current major lives under /latest, so the generic rule
+      // below used to send them to /docs/oss/nemo/functions, which is a 404.
+      {
+        source: `/docs/:page(${LATEST_PAGES.join("|")})`,
+        destination: `${DOCS}/latest/:page`,
+        permanent: true,
+      },
+      { source: "/docs/:section(conventions|3rd-parties)/:path*", destination: `${DOCS}/latest/:section/:path*`, permanent: true },
+
+      // The folder names zanreal.com uses, in case a link was rewritten by hand.
+      { source: "/docs/:version(latest|v2|v1)/:path*", destination: `${DOCS}/:version/:path*`, permanent: true },
+
+      // Anything else under /docs goes to the docs root. Appending the path
+      // here used to produce a 404 on zanreal.com for every URL that is not a
+      // real page there (e.g. /docs/getting-started); the root is the nearest
+      // page that exists. It also keeps any /docs path on this host from
+      // quietly serving content again alongside the copy on zanreal.com.
+      { source: "/docs/:path*", destination: DOCS, permanent: true },
     ];
   },
 };
