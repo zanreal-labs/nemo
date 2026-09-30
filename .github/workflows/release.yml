@@ -26,6 +26,19 @@ jobs:
       - name: Prepare
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      # npm trusted publishing (OIDC) needs npm >= 11.5.1 and a registry set up by setup-node.
+      # Without these two steps `changeset publish` ran the runner's bundled npm with no usable
+      # credentials, and the registry answered the PUT with E404 (2026-08-27, 2026-09-28).
+      # Same setup as zanreal-labs/search.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Use npm 11
+        run: npm install -g "npm@^11.5.1"
+
       # This job holds NPM_TOKEN, so it is the one place a dependency lifecycle script would be
       # most valuable to an attacker. Install exactly what the lockfile resolves and run none of
       # them; the release build needs neither.
