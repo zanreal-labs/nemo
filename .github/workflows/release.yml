@@ -19,6 +19,11 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    # Same as the medusa-* plugin repos, which publish through trusted publishing: the npm
+    # trusted publisher is bound to this environment, and no long-lived token is passed, so npm
+    # authenticates with the job's OIDC token instead of falling back to NPM_TOKEN (which the
+    # registry rejects with E404).
+    environment: npm
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -53,4 +58,3 @@ jobs:
           publish: bun run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
