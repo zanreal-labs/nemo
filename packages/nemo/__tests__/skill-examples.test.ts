@@ -164,7 +164,7 @@ describe("nemo-middleware-patterns examples", () => {
     expect(hits).toEqual(["page"]);
   });
 
-  test("storage factory isolates requests, default storage is shared", async () => {
+  test("storage factory isolates requests", async () => {
     const seenIsolated: Array<string | undefined> = [];
     const isolated = createNEMO(
       {
@@ -362,7 +362,10 @@ describe("matching facts stated in the skills", () => {
     expect(hits).toEqual([]);
   });
 
-  test("default storage is shared between requests", async () => {
+  // TODO(after #220 merges): the default storage becomes per request
+  // (fix/chain-log-waituntil-storage). Then expect [undefined, undefined]
+  // and rename this test. This pins canary behaviour (3.0.2 and older).
+  test("default storage is shared between requests (3.0.2 and older)", async () => {
     const seen: Array<string | undefined> = [];
     const p = createNEMO({
       "/x": (_r, e) => {

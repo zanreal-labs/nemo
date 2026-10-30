@@ -165,7 +165,7 @@ export const proxy = createNEMO(
 
 ### Work after the response
 
-`event.waitUntil()` inside NEMO does not reach the platform in 3.0.x (the promise is not awaited). For logging or analytics after the response, use `after()` from `next/server` (Next.js 15.1+, stable in 15.x/16) or move the work into the route handler.
+`event.waitUntil(promise)` hands the promise to the platform, so background work such as logging or analytics keeps running after the response is sent. Version note: this works in the first release after 3.0.2. On 3.0.2 and older the promise is not awaited and may be cut off; there, use `after()` from `next/server` (Next.js 15.1+) or move the work into the route handler.
 
 ## More
 

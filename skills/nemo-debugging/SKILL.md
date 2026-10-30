@@ -27,9 +27,9 @@ Work from the symptom table first, then use the debug options, then write a test
 | Later middleware does not see a header | Header set on a response that stopped the chain, or set after the redirect | Set `request.headers.set(...)` before, in an earlier middleware |
 | Page cannot read header with `headers()` | Header set only on the response, not on the request | Set it with `request.headers.set(...)`, NEMO forwards request header changes |
 | Cookie lost on redirect | Cookie set on an unrelated `NextResponse`, not returned | Set on the response you return, or on a continuing response from an earlier middleware |
-| Data from one request appears in another | Default storage (or a storage instance) is shared by all requests of that `createNEMO` | `storage: () => new MemoryStorageAdapter()` |
-| `event.log()` prints nothing, even with `debug: true` | `event.log` is not wired to `debug` inside chains in 3.0.x | Use `event.warn` / `event.error` or `console.log` while debugging |
-| Work started with `event.waitUntil` is cut off | `waitUntil` is not forwarded to the platform in NEMO 3.0.x | Use `after()` from `next/server` |
+| Data from one request appears in another | On 3.0.2 and older the default storage is shared by all requests of that `createNEMO` (security issue). Fixed in the next release: the default is per request. A ready-made instance (`storage: new Adapter()`) is still shared | Upgrade; on 3.0.2 and older pass `storage: () => new MemoryStorageAdapter()`. Always prefer a factory |
+| `event.log()` prints nothing, even with `debug: true` | Check that `debug: true` is in the third argument of `createNEMO`. On 3.0.2 and older `event.log` is not wired to `debug` inside chains (fixed in the next release) | Upgrade; on 3.0.2 and older use `event.warn` / `event.error` or `console.log` |
+| Work started with `event.waitUntil` is cut off | On 3.0.2 and older `waitUntil` is not forwarded to the platform (fixed in the next release) | Upgrade; on 3.0.2 and older use `after()` from `next/server` |
 | `req.params` is undefined | It does not exist | `event.params` (or `event.getParams(...)`) |
 | `StorageAdapter` import fails | Not exported from the main entry | `import { StorageAdapter } from "@zanreal/nemo/storage"` |
 | `NemoMiddlewareError: Middleware execution failed` | A middleware threw and `silent` is false | Read `error.originalError` (the thrown value) and `error.metadata` (chain, pathname, routeKey, index); the message also names chain, path, route key and index; fix, or handle it with `errorHandler` |

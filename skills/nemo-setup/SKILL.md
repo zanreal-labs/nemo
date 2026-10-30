@@ -125,7 +125,7 @@ Key facts:
 
 ## 5. Verify
 
-1. Start `next dev` and request a matched and an unmatched path. Set `debug: true` in the third argument for NEMO's internal logs (`event.log` itself prints nothing in 3.0.x, use `event.warn`).
+1. Start `next dev` and request a matched and an unmatched path. Set `debug: true` in the third argument for NEMO's internal logs (`event.log` prints with `debug: true` in the first release after 3.0.2; on 3.0.2 and older it prints nothing, use `event.warn`).
 2. Run the type checker. `satisfies MiddlewareConfig` gives contextual types to `request` and `event`.
 3. For unit tests see the `nemo-debugging` skill.
 

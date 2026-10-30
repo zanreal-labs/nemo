@@ -14,7 +14,7 @@ event.storage.size;
 
 ## Lifetime and isolation
 
-NEMO creates ONE storage when `createNEMO` runs (the default `MemoryStorageAdapter`, or the instance you pass) and reuses it for every request. Values written in request A can be read in request B on the same server instance. To get a fresh store per request pass a factory:
+By default each request gets its own fresh `MemoryStorageAdapter`, shared only by the middleware of that one request. Version note: this is the behaviour from the first release after 3.0.2. On 3.0.2 and older the default store was created once and reused for every request, so values from request A were readable in request B (a security issue); there, pass a factory as below. A ready-made instance (`storage: new MyAdapter()`) is reused across requests in every version, so pass a factory for per-request stores:
 
 ```ts
 import { createNEMO } from "@zanreal/nemo";
@@ -27,7 +27,7 @@ export const proxy = createNEMO(
 );
 ```
 
-Use the shared default only on purpose (a tiny in-memory cache). Edge instances are not shared across regions and are recycled, so never rely on it for correctness.
+Pass a shared instance only on purpose (a tiny in-memory cache). Edge instances are not shared across regions and are recycled, so never rely on it for correctness.
 
 Imports: `StorageAdapter` and `MemoryStorageAdapter` are exported from `@zanreal/nemo/storage` (and `@zanreal/nemo/storage/adapters/memory`), not from `@zanreal/nemo`.
 

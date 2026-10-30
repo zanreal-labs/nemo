@@ -97,7 +97,7 @@ test("storage does not leak between requests", async () => {
 });
 ```
 
-Without the `storage` factory the second request would see `"v"`.
+With the default storage this also holds from the first release after 3.0.2. On 3.0.2 and older, without the `storage` factory the second request would see `"v"`.
 
 ## Error handling test
 
