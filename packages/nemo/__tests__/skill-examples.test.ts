@@ -362,10 +362,9 @@ describe("matching facts stated in the skills", () => {
     expect(hits).toEqual([]);
   });
 
-  // TODO(after #220 merges): the default storage becomes per request
-  // (fix/chain-log-waituntil-storage). Then expect [undefined, undefined]
-  // and rename this test. This pins canary behaviour (3.0.2 and older).
-  test("default storage is shared between requests (3.0.2 and older)", async () => {
+  // Per request since #220. In 3.0.2 and older the default storage was shared
+  // between requests (noted in the skills text).
+  test("default storage is per request", async () => {
     const seen: Array<string | undefined> = [];
     const p = createNEMO({
       "/x": (_r, e) => {
@@ -375,7 +374,7 @@ describe("matching facts stated in the skills", () => {
     });
     await p(req("/x"), event);
     await p(req("/x"), event);
-    expect(seen).toEqual([undefined, "v"]);
+    expect(seen).toEqual([undefined, undefined]);
   });
 
   test("event.skip() without skipAfter keeps the after chain", async () => {
