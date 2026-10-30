@@ -1,0 +1,13 @@
+{
+  "name": "nemo",
+  "displayName": "NEMO for Next.js",
+  "description": "Agent skills for @zanreal/nemo: set up, write, migrate and debug composable Next.js middleware (proxy.ts).",
+  "author": {
+    "name": "ZanReal",
+    "url": "https://zanreal.com"
+  },
+  "homepage": "https://zanreal.com/docs/oss/nemo",
+  "repository": "https://github.com/zanreal-labs/nemo",
+  "license": "MIT",
+  "keywords": ["nextjs", "middleware", "proxy", "nemo", "skills"]
+}

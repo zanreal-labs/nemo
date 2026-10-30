@@ -1,0 +1,15 @@
+{
+  "name": "zanreal-nemo",
+  "owner": {
+    "name": "ZanReal",
+    "url": "https://zanreal.com"
+  },
+  "description": "Agent skills for @zanreal/nemo, the Next.js middleware composition library.",
+  "plugins": [
+    {
+      "name": "nemo",
+      "source": "./",
+      "description": "Set up, write, migrate and debug @zanreal/nemo middleware in Next.js apps."
+    }
+  ]
+}
