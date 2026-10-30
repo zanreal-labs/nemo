@@ -37,6 +37,39 @@ pnpm add @zanreal/nemo
 bun add @zanreal/nemo
 ```
 
+## Agent skills
+
+NEMO ships agent skills (the open [Agent Skills](https://agentskills.io) format) so coding agents such as Claude Code, Cursor, Codex and Copilot use the library correctly: right file name for your Next.js version, correct matching rules, and the pitfalls that docs and blog posts often get wrong.
+
+| Skill | Use it for |
+| --- | --- |
+| `nemo-setup` | Install NEMO, create `proxy.ts` / `middleware.ts`, matcher, first routes |
+| `nemo-middleware-patterns` | Chains, nesting, params, storage, redirects, rewrites, headers, auth, i18n |
+| `nemo-migrate` | Move from a single middleware, from `@rescale/nemo` (codemod), or to Next.js 16 `proxy.ts` |
+| `nemo-debugging` | Find out why a middleware does not run, and write tests for it |
+
+Install all of them into your project with the [skills CLI](https://skills.sh):
+
+```bash
+npx skills add zanreal-labs/nemo
+```
+
+List first, or pick one skill and one agent:
+
+```bash
+npx skills add zanreal-labs/nemo --list
+npx skills add zanreal-labs/nemo --skill nemo-setup -a claude-code
+```
+
+Claude Code plugin marketplace:
+
+```bash
+claude plugin marketplace add zanreal-labs/nemo
+claude plugin install nemo@zanreal-nemo
+```
+
+The skills live in [`skills/`](https://github.com/zanreal-labs/nemo/tree/canary/skills) and describe the current major version (`@zanreal/nemo@3`). More in the [agent skills docs](https://github.com/zanreal-labs/nemo/blob/canary/docs/latest/agent-skills.mdx).
+
 ## Key Features
 
 - Path-based middleware routing

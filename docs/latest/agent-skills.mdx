@@ -1,0 +1,61 @@
+---
+title: Agent skills
+description: Install NEMO agent skills so Claude Code, Cursor, Codex and other coding agents set up, write, migrate and debug your middleware correctly.
+icon: Sparkles
+---
+
+NEMO publishes agent skills in the open [Agent Skills](https://agentskills.io) format. A skill is a
+folder with a `SKILL.md` that an agent loads when your request matches its description. With the
+NEMO skills installed, your agent knows the file name for your Next.js version, how routes match,
+what continues or stops a chain, and which patterns from older posts no longer work.
+
+## Skills
+
+| Skill | Use it for |
+| --- | --- |
+| `nemo-setup` | Install NEMO, create `proxy.ts` or `middleware.ts`, the matcher and the first routes |
+| `nemo-middleware-patterns` | Chains, nesting, params, storage, redirects, rewrites, headers, cookies, auth gating, i18n |
+| `nemo-migrate` | From a single middleware, from `@rescale/nemo` with the codemod, or to Next.js 16 `proxy.ts` |
+| `nemo-debugging` | Why a middleware does not run, lost responses, shared storage, and tests |
+
+## Install
+
+With the [skills CLI](https://skills.sh), which supports Claude Code, Cursor, Codex, GitHub Copilot
+and many other agents:
+
+```bash
+npx skills add zanreal-labs/nemo
+```
+
+Useful options:
+
+```bash
+npx skills add zanreal-labs/nemo --list                          # show skills without installing
+npx skills add zanreal-labs/nemo --skill nemo-setup              # one skill
+npx skills add zanreal-labs/nemo -a claude-code                  # one agent
+npx skills add zanreal-labs/nemo -g                              # global instead of project
+```
+
+With the Claude Code plugin marketplace:
+
+```bash
+claude plugin marketplace add zanreal-labs/nemo
+claude plugin install nemo@zanreal-nemo
+```
+
+Plugin skills are namespaced, for example `/nemo:nemo-setup`.
+
+## Use
+
+You do not call the skills by hand. Ask for the outcome and the agent picks the skill:
+
+- "Add NEMO to this Next.js app and protect everything under /dashboard."
+- "Why does my NEMO route for /blog not run on /blog/my-post?"
+- "Migrate us from @rescale/nemo."
+- "Write tests for this createNEMO config."
+
+## Versions
+
+The skills describe `@zanreal/nemo` 3 and are checked against the library source and tests in CI.
+They live in the [`skills`](https://github.com/zanreal-labs/nemo/tree/canary/skills) folder of the
+repository. Report mistakes as [issues](https://github.com/zanreal-labs/nemo/issues).
