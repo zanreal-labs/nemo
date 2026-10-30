@@ -449,6 +449,27 @@ export const proxy = createNEMO({
 });
 ```
 
+#### Storage scope
+
+By default every request gets its own in-memory storage. Values set while handling one request
+are visible to every middleware in that request's chain (global `before`, matched route
+middleware, global `after`) and to nothing else.
+
+If you pass a custom adapter, prefer a factory so each request gets a fresh instance:
+
+```typescript
+createNEMO(middlewares, undefined, {
+  storage: () => new MyStorageAdapter(),
+});
+```
+
+An adapter instance passed directly (`storage: new MyStorageAdapter()`) is reused for every
+request handled by that NEMO instance, so anything it holds is visible across requests. Only do
+that for data that is genuinely global, never for per-user or per-request values.
+
+> In 3.0.0 and earlier the default storage was a single module-level instance shared by all requests.
+> Code that relied on values surviving between requests must now keep them in its own store.
+
 ### URL Parameters
 
 Access URL parameters through the event's params property:
@@ -504,7 +525,8 @@ All logs maintain the "[NEMO]" prefix for consistency with internal framework lo
 ## Notes
 
 - Middleware functions are executed in order until a Response is returned
-- The storage is shared between all middleware functions in the chain
+- The storage is shared between all middleware functions in the chain of a single request
+- `event.waitUntil()` is forwarded to the platform `waitUntil` that Next.js passes to the middleware
 - Headers and cookies are automatically forwarded between middleware functions
 - Supports Next.js native middleware pattern
 
