@@ -357,13 +357,23 @@ export class NemoEvent extends NextFetchEvent {
     storage?: StorageAdapter,
     debug?: boolean,
   ): NemoEvent {
-    // @ts-expect-error - accessing private property
-    const original = event._raw || {};
+    // @ts-expect-error - `_raw` is not part of NextFetchEvent; kept for callers that set it
+    const original = event?._raw || {};
+
+    // Next.js keeps the platform waitUntil (or its own promise list) in a private symbol
+    // on the event it created, so it cannot be read from here. Delegate to that event's
+    // public waitUntil instead: it forwards to the platform when there is one, and
+    // otherwise records the promise where Next.js awaits it after the middleware returns.
+    const context =
+      original.context ??
+      (typeof event?.waitUntil === "function"
+        ? { waitUntil: (promise: Promise<any>) => event.waitUntil(promise) }
+        : undefined);
 
     return new NemoEvent({
       request: original.request,
-      sourcePage: event.sourcePage,
-      context: original.context,
+      sourcePage: event?.sourcePage,
+      context,
       nemo: nemoContext,
       storage: storage || new MemoryStorageAdapter(nemoContext),
       debug,
