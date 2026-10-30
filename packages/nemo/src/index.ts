@@ -69,8 +69,11 @@ export class NEMO {
         this.storageFactory = false;
       }
     } else {
-      this.storage = new MemoryStorageAdapter();
-      this.storageFactory = false;
+      // No storage configured: create a fresh in-memory store for every request.
+      // A single instance here would live as long as the module and be shared by all
+      // requests, letting one request read values another request stored.
+      this.storage = () => new MemoryStorageAdapter();
+      this.storageFactory = true;
     }
 
     // Log initialization
@@ -87,7 +90,9 @@ export class NEMO {
       hasGlobalMiddleware: !!globalMiddleware,
       storageAdapter: storageInstance
         ? storageInstance.constructor.name
-        : "factory function",
+        : this.config.storage
+          ? "factory function"
+          : "MemoryStorageAdapter (per request)",
       storageIsFactory: this.storageFactory,
     });
   }
@@ -880,7 +885,12 @@ export class NEMO {
       : (this.storage as StorageAdapter);
 
     // Create NemoEvent with empty initial context and custom storage
-    const nemoEvent = NemoEvent.from(event as never, {}, storageInstance);
+    const nemoEvent = NemoEvent.from(
+      event as never,
+      {},
+      storageInstance,
+      this.config.debug,
+    );
 
     const queue: NextMiddlewareWithMeta[] = this.propagateQueue(request);
 
