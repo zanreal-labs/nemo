@@ -1,6 +1,8 @@
 # From @rescale/nemo to @zanreal/nemo
 
-`@rescale/nemo` was renamed to `@zanreal/nemo` at 3.0.0. Exports and signatures are identical. `@rescale/nemo@3.0.0` still exists as a deprecated alias that re-exports `@zanreal/nemo`, so nothing breaks immediately, but it receives no updates. A `^2` range does not resolve to that alias.
+`@rescale/nemo` was renamed to `@zanreal/nemo` at 3.0.0. Exports and signatures are identical. `@rescale/nemo@3` still exists as a deprecated alias that re-exports `@zanreal/nemo`, so nothing breaks immediately, but it receives no updates. A `^2` range does not resolve to that alias.
+
+Still on `@rescale/nemo` 1.x? The 1.x API differs. Upgrade to the 2.x API first (see the v1.4 docs at zanreal.com/docs/oss/nemo/v1), then run the codemod.
 
 ## Codemod
 

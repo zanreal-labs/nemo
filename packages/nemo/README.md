@@ -68,7 +68,7 @@ claude plugin marketplace add zanreal-labs/nemo
 claude plugin install nemo@zanreal-nemo
 ```
 
-The skills live in [`skills/`](./skills) and describe the current major version (`@zanreal/nemo@3`). More in the [docs](https://zanreal.com/docs/oss/nemo/latest/agent-skills).
+The skills live in [`skills/`](https://github.com/zanreal-labs/nemo/tree/canary/skills) and describe the current major version (`@zanreal/nemo@3`). More in the [agent skills docs](https://github.com/zanreal-labs/nemo/blob/canary/docs/latest/agent-skills.mdx).
 
 ## Key Features
 

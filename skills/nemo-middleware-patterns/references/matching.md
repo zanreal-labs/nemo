@@ -1,16 +1,16 @@
-# Matching reference (@zanreal/nemo 3.0.0)
+# Matching reference (@zanreal/nemo 3.0.x)
 
 ## Which kind of key matches what
 
 | Config value | Matches |
 | --- | --- |
 | `"/foo": fn` or `[fn, fn]` at top level | exactly `/foo` (and not `/foo/bar`) |
-| `"/foo": { middleware, "/bar": fn }` | `/foo` and everything under it for `middleware`; `/foo/bar` for the child |
+| `"/foo": { middleware, "/bar": fn }` | `/foo` and everything under it for `middleware`; `/foo/bar` and everything under it for the child (nested keys always match as prefixes) |
 | `"/foo/:path*": fn` | `/foo`, `/foo/a`, `/foo/a/b` |
-| `"/foo/:id": fn` | `/foo/123` only (one segment), not `/foo` and not `/foo/1/2` |
+| `"/foo/:id": fn` at top level | `/foo/123` only (one segment), not `/foo` and not `/foo/1/2` |
 | `"/": fn` | exactly `/` |
 
-Nested children are joined to the parent: `"/dashboard": { "/users": { "/:userId": fn } }` matches `/dashboard/users/123`, and the whole chain `dashboard -> users -> :userId` runs in that order (parents first).
+Nested children are joined to the parent: `"/dashboard": { "/users": { "/:userId": fn } }` matches `/dashboard/users/123`, and the whole chain `dashboard -> users -> :userId` runs in that order (parents first). Nested keys are prefix matches, so `fn` also runs for `/dashboard/users/123/edit`. If a nested child must match one exact path, check `request.nextUrl.pathname` inside it, or move it to a top-level key with the full path.
 
 Tip: when a nested parent has no function of its own, use an object without `middleware`:
 
@@ -23,7 +23,7 @@ Tip: when a nested parent has no function of its own, use an object without `mid
 
 ## Pattern syntax
 
-Patterns with `:`, `*` or `(` go through path-to-regexp v6.3 (case insensitive, non-strict, trailing slash optional). Plain paths are compared directly.
+Patterns with `:`, `*` or `(` go through path-to-regexp v6 (case insensitive, non-strict, trailing slash optional). Plain paths are compared directly and case sensitively (`"/Pricing"` does not match `/pricing`).
 
 Valid v6 forms:
 
@@ -39,7 +39,7 @@ Do NOT write (they fail or silently never match):
 - `/(!api)/...` as an exclude: in v6 it matches the literal text `!api`.
 - Regex flags or full regexes as keys.
 
-An invalid pattern is swallowed. If a route "never runs", test the pattern with `path-to-regexp@6` in isolation or log with `debug: true`.
+An invalid pattern is swallowed: NEMO prints `[NEMO] Error creating regexp for pattern ...` with `console.error` (even without `debug`) and the route never matches. If a route "never runs", look for that line or test the pattern with `path-to-regexp@6` in isolation.
 
 ## Params
 
@@ -72,7 +72,7 @@ The matcher must be a static literal. It cannot be built from variables.
 ## Order of execution
 
 1. `globalMiddleware.before`
-2. matched routes: prefix (nested parent) matches before exact matches, longer patterns first, each route's array in order
+2. matched routes, sorted by nesting depth (top-level keys first, then their children). At the same depth a prefix match comes before an exact match, then longer patterns come first. Each route's array runs in order.
 3. `globalMiddleware.after`
 
 A stop (redirect, rewrite, JSON, plain `Response`) ends everything, including `after`.

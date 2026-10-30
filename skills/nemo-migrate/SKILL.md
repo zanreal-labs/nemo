@@ -21,7 +21,7 @@ Pick the path that matches the project.
 
 ## Quick path: from @rescale/nemo
 
-The API did not change in 3.0.0, only the package name.
+The API did not change in 3.0.0, only the package name. Projects still on `@rescale/nemo` 1.x must first move to the 2.x API (see the v1.4 docs), then rename.
 
 ```bash
 npx @zanreal/nemo-codemod --dry      # preview

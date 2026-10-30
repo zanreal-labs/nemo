@@ -19,11 +19,13 @@ Do not put secrets in forwarded headers if the value must not reach the browser.
 
 In tests the forwarded form is the response header `x-middleware-request-<name>`.
 
-## Response headers only
+## Response headers
 
 ```ts
 return NextResponse.next({ headers: { "x-frame-options": "DENY" } });
 ```
+
+NEMO copies these headers onto the request as well, so they are also forwarded to the page. There is no way to set a header on the response only while the chain continues.
 
 Continuing responses are merged: headers from several middlewares accumulate, the last write to the same name wins.
 

@@ -6,6 +6,7 @@ import { describe, expect, test } from "bun:test";
 import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
 import {
   NEMO,
+  NemoMiddlewareError,
   createNEMO,
   type MiddlewareConfig,
   type NextMiddleware,
@@ -304,5 +305,223 @@ describe("nemo-debugging examples", () => {
     const res = await p(req("/dashboard/x"), event);
     expect(res?.status).toBe(302);
     expect(res?.headers.get("location")).toBe("http://localhost/login");
+  });
+});
+
+describe("matching facts stated in the skills", () => {
+  test("nested children match as prefixes", async () => {
+    const hits: string[] = [];
+    const p = createNEMO({
+      "/app": {
+        middleware: () => {
+          hits.push("app");
+        },
+        "/settings": () => {
+          hits.push("settings");
+        },
+      },
+      "/dashboard": {
+        "/users": {
+          "/:userId": (_r, e) => {
+            hits.push(`user:${String(e.params.userId)}`);
+          },
+        },
+      },
+    });
+    await p(req("/app/settings/deep"), event);
+    await p(req("/dashboard/users/12/edit"), event);
+    expect(hits).toEqual(["app", "settings", "user:12"]);
+  });
+
+  test("plain paths are case sensitive, patterns are not", async () => {
+    const hits: string[] = [];
+    const p = createNEMO({
+      "/Pricing": () => {
+        hits.push("plain");
+      },
+      "/blog/:path*": () => {
+        hits.push("pattern");
+      },
+    });
+    await p(req("/pricing"), event);
+    await p(req("/BLOG/x"), event);
+    expect(hits).toEqual(["pattern"]);
+  });
+
+  test("invalid v8 pattern and (!api) never match", async () => {
+    const hits: string[] = [];
+    const p = createNEMO({
+      "/api{/*path}": () => {
+        hits.push("v8");
+      },
+      "/(!api)/:x": () => {
+        hits.push("bang");
+      },
+    });
+    await p(req("/api/x"), event);
+    expect(hits).toEqual([]);
+  });
+
+  test("default storage is shared between requests", async () => {
+    const seen: Array<string | undefined> = [];
+    const p = createNEMO({
+      "/x": (_r, e) => {
+        seen.push(e.storage.get<string>("k"));
+        e.storage.set("k", "v");
+      },
+    });
+    await p(req("/x"), event);
+    await p(req("/x"), event);
+    expect(seen).toEqual([undefined, "v"]);
+  });
+
+  test("event.skip() without skipAfter keeps the after chain", async () => {
+    const calls: string[] = [];
+    const p = createNEMO(
+      {
+        "/a": [
+          (_r, e) => {
+            e.skip();
+          },
+          () => {
+            calls.push("second");
+          },
+        ],
+      },
+      {
+        after: () => {
+          calls.push("after");
+        },
+      },
+    );
+    await p(req("/a"), event);
+    expect(calls).toEqual(["after"]);
+  });
+
+  test("NemoMiddlewareError exposes originalError and metadata", async () => {
+    const boom = new Error("boom");
+    const p = createNEMO({
+      "/e": () => {
+        throw boom;
+      },
+    });
+    const original = console.error;
+    console.error = () => {};
+    let caught: unknown;
+    try {
+      await p(req("/e"), event);
+    } catch (error) {
+      caught = error;
+    } finally {
+      console.error = original;
+    }
+    expect(caught).toBeInstanceOf(NemoMiddlewareError);
+    const err = caught as NemoMiddlewareError;
+    expect(err.originalError).toBe(boom);
+    expect(err.metadata.routeKey).toBe("/e");
+    expect(err.metadata.chain).toBe("main");
+  });
+
+  test("response headers from NextResponse.next are also forwarded", async () => {
+    const p = createNEMO({
+      "/h": () => NextResponse.next({ headers: { "x-frame-options": "DENY" } }),
+    });
+    const res = await p(req("/h"), event);
+    expect(res?.headers.get("x-frame-options")).toBe("DENY");
+    expect(res?.headers.get("x-middleware-request-x-frame-options")).toBe("DENY");
+  });
+
+  test("cookie set earlier is carried onto a later redirect", async () => {
+    const p = createNEMO({
+      "/r": [
+        () => {
+          const response = NextResponse.next();
+          response.cookies.set("seen", "1", { path: "/" });
+          return response;
+        },
+        (request) => NextResponse.redirect(new URL("/n", request.url)),
+      ],
+    });
+    const res = await p(req("/r"), event);
+    expect(res?.status).toBe(307);
+    expect(res?.headers.getSetCookie()).toEqual(["seen=1; Path=/"]);
+  });
+});
+
+describe("recipes and migration examples", () => {
+  test("i18n rewrite in global after", async () => {
+    const locales = ["en", "pl"];
+    const p = createNEMO(
+      {},
+      {
+        after: (request) => {
+          const { pathname } = request.nextUrl;
+          const hasLocale = locales.some(
+            (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
+          );
+          if (hasLocale) return;
+          const url = request.nextUrl.clone();
+          url.pathname = `/en${pathname === "/" ? "" : pathname}`;
+          return NextResponse.rewrite(url);
+        },
+      },
+    );
+    expect(
+      (await p(req("/about"), event))?.headers.get("x-middleware-rewrite"),
+    ).toBe("http://localhost/en/about");
+    expect(
+      (await p(req("/pl/x"), event))?.headers.get("x-middleware-rewrite"),
+    ).toBeNull();
+  });
+
+  test("migrated single middleware", async () => {
+    const middleware = createNEMO(
+      {
+        "/dashboard/:path*": (request) => {
+          if (!request.cookies.has("session")) {
+            return NextResponse.redirect(new URL("/login", request.url));
+          }
+        },
+        "/api/:path*": (request) => {
+          request.headers.set("x-api", "1");
+        },
+        "/old": (request) =>
+          NextResponse.redirect(new URL("/new", request.url), 308),
+      },
+      {
+        before: (request) => {
+          request.headers.set("x-request-id", crypto.randomUUID());
+        },
+      },
+    );
+    const dash = await middleware(req("/dashboard"), event);
+    expect(dash?.headers.get("location")).toBe("http://localhost/login");
+    const old = await middleware(req("/old"), event);
+    expect(old?.status).toBe(308);
+    const api = await middleware(req("/api/x"), event);
+    expect(api?.headers.get("x-middleware-request-x-api")).toBe("1");
+    expect(api?.headers.get("x-middleware-request-x-request-id")).toBeTruthy();
+  });
+
+  test("rate limit recipe returns 429 after the limit", async () => {
+    const hits = new Map<string, { count: number; reset: number }>();
+    const p = createNEMO({
+      "/api/:path*": (request) => {
+        const ip =
+          request.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+        const now = Date.now();
+        const entry = hits.get(ip);
+        if (!entry || entry.reset < now) {
+          hits.set(ip, { count: 1, reset: now + 60_000 });
+          return;
+        }
+        entry.count += 1;
+        if (entry.count > 2) {
+          return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+        }
+      },
+    });
+    for (let i = 0; i < 2; i++) await p(req("/api/x"), event);
+    expect((await p(req("/api/x"), event))?.status).toBe(429);
   });
 });

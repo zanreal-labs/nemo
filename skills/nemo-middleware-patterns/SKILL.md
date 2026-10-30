@@ -10,7 +10,7 @@ metadata:
 
 # NEMO middleware patterns
 
-Everything here describes `@zanreal/nemo` 3.0.0 as the source and tests implement it. If the docs or README disagree, trust this file and the source.
+Everything here describes `@zanreal/nemo` 3.0.x as the source and tests implement it. If the docs or README disagree, trust this file and the source.
 
 Signature of every middleware:
 
@@ -42,10 +42,10 @@ Trap: `NextResponse.redirect` and `rewrite` need absolute URLs. Use `new URL("/l
 ## Route matching in short
 
 - Function or array at top level: exact path only (`"/foo"` does not run for `/foo/bar`).
-- Object with child keys: prefix match, children joined to the parent path, `middleware` key holds the parent's own function(s).
+- Object with child keys: prefix match, children joined to the parent path, `middleware` key holds the parent's own function(s). Nested children are prefix matches too.
 - `"/"` only runs for `/`.
-- Dynamic or wildcard patterns (`:`, `*`, `(`) use path-to-regexp v6, case insensitive.
-- Order: global `before`, matched routes (shorter parents first, then children), global `after`. Within an array, in array order.
+- Dynamic or wildcard patterns (`:`, `*`, `(`) use path-to-regexp v6, case insensitive. Plain paths are compared exactly (case sensitive).
+- Order: global `before`, matched routes (by nesting depth, parents first; at the same depth, longer patterns first), global `after`. Within an array, in array order.
 - Details and syntax pitfalls: `references/matching.md`.
 
 ## Core patterns
@@ -74,7 +74,7 @@ export const proxy = createNEMO({
 });
 ```
 
-The `/dashboard` function guards `/dashboard` and everything under it. `/dashboard/admin` runs the parent first, then the child. If the parent redirects, the child never runs.
+The `/dashboard` function guards `/dashboard` and everything under it. `/dashboard/admin` (and `/dashboard/admin/x`, since nested children match as prefixes) runs the parent first, then the child. If the parent redirects, the child never runs.
 
 ### Pass data to later middleware and to pages
 
@@ -165,7 +165,7 @@ export const proxy = createNEMO(
 
 ### Work after the response
 
-`event.waitUntil()` inside NEMO does not reach the platform in 3.0.0 (the promise is not awaited). For logging or analytics after the response, use `after()` from `next/server` (Next.js 15.1+, stable in 15.x/16) or move the work into the route handler.
+`event.waitUntil()` inside NEMO does not reach the platform in 3.0.x (the promise is not awaited). For logging or analytics after the response, use `after()` from `next/server` (Next.js 15.1+, stable in 15.x/16) or move the work into the route handler.
 
 ## More
 

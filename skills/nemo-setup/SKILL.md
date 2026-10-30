@@ -34,7 +34,7 @@ yarn add @zanreal/nemo
 bun add @zanreal/nemo
 ```
 
-Peer dependency is `next >=13`. The package is ESM and CJS compatible.
+Peer dependency is `next >=13`. The package ships ESM only (its `require` condition points at the same ESM build). Next.js handles that; in Jest see `nemo-debugging/references/testing.md`.
 
 ## 3. Minimal file
 
@@ -93,6 +93,7 @@ export const proxy = createNEMO(
     ],
 
     // nested: parent runs for the whole subtree, children add on top
+    // (nested children match as prefixes too: "/settings" also runs for /app/settings/x)
     "/app": {
       middleware: (request) => {
         request.headers.set("x-app", "1");
@@ -116,15 +117,15 @@ export const proxy = createNEMO(
 Key facts:
 
 - A top-level key whose value is a function or array matches that exact path only. `"/foo"` does NOT run for `/foo/bar`. Use `"/foo/:path*"` or a nested object for prefix matching.
-- A key whose value is an object with child keys matches as a prefix and children are joined to the parent path.
+- A key whose value is an object with child keys matches as a prefix and children are joined to the parent path. Nested children also match as prefixes (`"/app": { "/settings": fn }` runs `fn` for `/app/settings` and `/app/settings/x`).
 - `"/"` runs only for the exact root path `/`. It is not a catch-all. For "every request" use `globalMiddleware.before`.
-- Pattern syntax is path-to-regexp v6 (`:param`, `:param*`, `:param+`, `:param?`, `(regex)`), case insensitive. An invalid pattern is logged and silently never matches.
-- Order: global `before`, then matched routes (parents before children), then global `after`.
+- Pattern syntax is path-to-regexp v6 (`:param`, `:param*`, `:param+`, `:param?`, `(regex)`). Patterns with `:`, `*` or `(` match case insensitively; plain paths like `"/pricing"` are compared exactly, case included. An invalid pattern is logged with `console.error` and never matches, nothing is thrown.
+- Order: global `before`, then matched routes (parents before children; at the same depth, longer patterns first), then global `after`.
 - A middleware returning `undefined` or `NextResponse.next()` lets the chain continue. `NextResponse.redirect`, `NextResponse.rewrite`, `NextResponse.json` or a plain `new Response(...)` end it. See the `nemo-middleware-patterns` skill for all rules.
 
 ## 5. Verify
 
-1. Start `next dev` and request a matched and an unmatched path. Set `debug: true` in the third argument for NEMO's internal logs (`event.log` itself prints nothing in 3.0.0, use `event.warn`).
+1. Start `next dev` and request a matched and an unmatched path. Set `debug: true` in the third argument for NEMO's internal logs (`event.log` itself prints nothing in 3.0.x, use `event.warn`).
 2. Run the type checker. `satisfies MiddlewareConfig` gives contextual types to `request` and `event`.
 3. For unit tests see the `nemo-debugging` skill.
 

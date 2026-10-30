@@ -68,7 +68,7 @@ export const config = {
 
 | Old code | NEMO |
 | --- | --- |
-| `pathname === "/x"` | `"/x": fn` |
+| `pathname === "/x"` | top-level `"/x": fn` (exact). Nested keys are prefix matches, so an exact check under a nested key needs `request.nextUrl.pathname === ...` inside |
 | `pathname.startsWith("/x")` | `"/x/:path*": fn` (also matches `/x`), or a nested object |
 | `pathname.startsWith("/x/y")` inside the `/x` branch | nested key `"/y"` under `"/x"` |
 | regex on pathname | pattern with `(regex)`, see `nemo-middleware-patterns/references/matching.md` |

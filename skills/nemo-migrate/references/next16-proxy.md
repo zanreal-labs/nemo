@@ -7,6 +7,7 @@ Next.js 16 renamed the Middleware convention to Proxy.
 | File | `middleware.ts` | `proxy.ts` |
 | Export | `export const middleware` | `export const proxy` |
 | `config.matcher` | same | same |
+| Runtime | Edge by default, configurable | always Node.js, `runtime` config is not allowed |
 
 NEMO works with both. Only the file and export name change:
 
@@ -31,4 +32,5 @@ Steps:
 2. Rename the export to `proxy`. A default export also works, but keep one convention in the project.
 3. Do not keep both files. Next.js 16 may still honor `middleware.ts` with a deprecation warning, but two entries lead to confusion.
 4. Update tests and docs that import the old file name.
-5. The Next.js team provides `npx @next/codemod@canary middleware-to-proxy .` for the rename of non-NEMO code. For NEMO projects the manual rename above is enough.
+5. Remove any `runtime` export or `config.runtime` from the file: in `proxy.ts` it is a build error. If you must stay on the Edge runtime, keep `middleware.ts` for now.
+6. The Next.js team provides `npx @next/codemod@canary middleware-to-proxy .` for the rename of non-NEMO code. For NEMO projects the manual rename above is enough.
